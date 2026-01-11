@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NLP Task Museum – Luhn (1958) & Edmundson (1969) Summarization</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f7;
+      color: #222;
+    }
+
+    header {
+      padding: 1rem 2rem 0.5rem;
+      background: #111827;
+      color: #f9fafb;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+
+    header p {
+      margin: 0.4rem 0 0.5rem 0;
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+
+    main {
+      padding: 1rem 2rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    select, input, textarea, button {
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    select, input[type="number"], input[type="text"] {
+      padding: 0.25rem 0.4rem;
+      border-radius: 4px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      min-width: 120px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      resize: vertical;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+      background: #fff;
+      line-height: 1.4;
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 900px) {
+      .columns {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      padding: 1rem 1.2rem;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .small-note {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 0.4rem 0.9rem;
+      cursor: pointer;
+      background: #111827;
+      color: #f9fafb;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: transform 0.05s ease-out, box-shadow 0.05s ease-out, background 0.1s ease-out;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+      box-shadow: none;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 7px 18px rgba(15, 23, 42, 0.3);
+      background: #0f172a;
+    }
+
+    button.secondary:hover {
+      background: #d1d5db;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+    }
+
+    button:active {
+      transform: translateY(0px);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
+    }
+
+    .summary-output {
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 0.6rem 0.7rem;
+      max-height: 360px;
+      overflow: auto;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .summary-output p {
+      margin: 0.25rem 0;
+    }
+
+    .summary-output .sentence {
+      margin-bottom: 0.2rem;
+    }
+
+    .sentence-score {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-left: 0.25rem;
+    }
+
+    .error {
+      color: #b91c1c;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
+
+    .weights-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .weights-grid label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .weights-grid input[type="number"] {
+      width: 90px;
+    }
+
+    .algo-description {
+      font-size: 0.8rem;
+      color: #4b5563;
+      margin-top: 0.2rem;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+      background: #f3f4f6;
+      padding: 0 0.2rem;
+      border-radius: 3px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      margin-left: 0.4rem;
+      border: 1px solid #e5e7eb;
+      color: #4b5563;
+      background: #f9fafb;
+    }
+
+    .footer-note {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>NLP Task Museum – Text Summarization (Luhn 1958 & Edmundson 1969)</h1>
+  <p>Type or pick a sample article and experience how classic extractive summarizers behave.</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>
+      Input Text
+      <span class="badge">Demo Corpus</span>
+    </h2>
+
+    <div class="controls-row">
+      <label>
+        Sample article:
+        <select id="sampleSelect">
+          <option value="none">(none – use custom text)</option>
+          <option value="metro">Urban Metro Expansion</option>
+          <option value="climate">Climate & Urban Heat Islands</option>
+          <option value="printing">Invention of the Printing Press</option>
+        </select>
+      </label>
+
+      <label>
+        Sentences in summary:
+        <input id="numSentences" type="number" min="1" max="15" value="3" />
+      </label>
+    </div>
+
+    <label>
+      Title (for Edmundson's Title score):
+      <input id="titleInput" type="text" placeholder="Enter a short title, or load a sample…" />
+    </label>
+
+    <div style="margin-top: 0.5rem;">
+      <label>
+        Document text:
+        <textarea id="inputText" placeholder="Paste or type English text here…"></textarea>
+      </label>
+    </div>
+
+    <p class="small-note">
+      Sentence splitting is naive (based on punctuation), so very unusual punctuation may behave oddly.
+      All processing is case-insensitive; output sentences are shown as in the original text.
+    </p>
+  </section>
+
+  <div class="columns">
+    <section class="panel">
+      <h2>
+        Luhn Summarizer (1958)
+        <span class="tag">Frequency + Clusters</span>
+      </h2>
+      <p class="algo-description">
+        Significant words are selected based on term frequency (with stopwords removed). Sentences are scored
+        via <em>significance factors</em> computed from clusters of significant words where the gap between
+        successive significant words is below a maximum distance. For each cluster,
+        <code>score = (sigCount² / clusterLength)</code>; the sentence score is the maximum cluster score.
+      </p>
+
+      <div class="controls-row">
+        <label>
+          Min frequency for significant words:
+          <input id="luhnMinFreq" type="number" min="1" max="10" value="2" />
+        </label>
+        <label>
+          Max allowed gap in a cluster (words):
+          <input id="luhnMaxGap" type="number" min="1" max="15" value="4" />
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button id="runLuhn">
+          ▶ Run Luhn 1958
+        </button>
+        <button id="showLuhnScores" class="secondary">
+          ☰ Show full sentence scores
+        </button>
+      </div>
+
+      <div id="luhnError" class="error" style="display:none;"></div>
+      <div id="luhnOutput" class="summary-output" style="margin-top:0.5rem;"></div>
+    </section>
+
+    <section class="panel">
+      <h2>
+        Edmundson Summarizer (1969)
+        <span class="tag">Cue + Key + Title + Position</span>
+      </h2>
+      <p class="algo-description">
+        Each sentence is scored using four indicators:
+        <code>Cue</code> (bonus/stigma cue words),
+        <code>Key</code> (key words derived from frequency),
+        <code>Title</code> (overlap with title), and
+        <code>Position</code> (location in document).
+        Indicators are normalized and combined via a linear weighting scheme.
+      </p>
+
+      <div class="weights-grid">
+        <label>
+          Cue weight (w<sub>c</sub>):
+          <input id="wCue" type="number" step="0.1" value="1.0" />
+        </label>
+        <label>
+          Key weight (w<sub>k</sub>):
+          <input id="wKey" type="number" step="0.1" value="2.0" />
+        </label>
+        <label>
+          Title weight (w<sub>t</sub>):
+          <input id="wTitle" type="number" step="0.1" value="1.5" />
+        </label>
+        <label>
+          Position weight (w<sub>p</sub>):
+          <input id="wPos" type="number" step="0.1" value="0.7" />
+        </label>
+      </div>
+
+      <p class="small-note">
+        Key words are approximated as the top non-stopword terms by frequency within the document.
+        Cue words include a small list of bonus and stigma words inspired by Edmundson's formulation.
+      </p>
+
+      <div class="button-row">
+        <button id="runEdmundson">
+          ▶ Run Edmundson 1969
+        </button>
+        <button id="showEdmundsonScores" class="secondary">
+          ☰ Show full sentence scores
+        </button>
+      </div>
+
+      <div id="edError" class="error" style="display:none;"></div>
+      <div id="edOutput" class="summary-output" style="margin-top:0.5rem;"></div>
+    </section>
+  </div>
+
+  <p class="footer-note">
+    All computation happens locally in your browser. Implementations aim to follow the core structure
+    of the original algorithms: Luhn's significance factor with clustering of significant words, and
+    Edmundson's combination of Cue/Key/Title/Position indicators for sentence extraction.
+  </p>
+</main>
+
+<script>
+  // ---------------------- Utility: Stopword list & tokenization ---------------------- //
+
+  // Simple English stopword list (inspired by NLTK stopwords)
+  const STOP_WORDS = new Set([
+    "a","an","the","and","or","but","if","while","of","at","by","for","with","about","against",
+    "between","into","through","during","before","after","above","below","to","from","up","down",
+    "in","out","on","off","over","under","again","further","then","once","here","there","when",
+    "where","why","how","all","any","both","each","few","more","most","other","some","such","no",
+    "nor","not","only","own","same","so","than","too","very","can","will","just","don","should",
+    "now","is","am","are","was","were","be","been","being","do","does","did","having","have","has",
+    "had","he","she","it","we","they","you","me","him","her","them","my","your","our","their",
+    "this","that","these","those","as","because","until","while","i"
+  ]);
+
+  function normalizeText(text) {
+    return text.replace(/\s+/g, " ").trim();
+  }
+
+  function splitSentences(text) {
+    // Naive sentence splitter: split on . ! ? followed by space or end of text
+    const sentences = [];
+    let current = "";
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      current += ch;
+      if (ch === "." || ch === "!" || ch === "?") {
+        // Look ahead to see if next non-space char looks like sentence start or end of text
+        let j = i + 1;
+        while (j < text.length && /\s/.test(text[j])) j++;
+        if (j >= text.length || /[A-Z0-9]/.test(text[j])) {
+          const s = current.trim();
+          if (s.length > 0) sentences.push(s);
+          current = "";
+        }
+      }
+    }
+    if (current.trim().length > 0) {
+      sentences.push(current.trim());
+    }
+    return sentences;
+  }
+
+  function tokenize(text) {
+    // Lowercase and split on non-letter characters; keep only alphabetic tokens
+    return text
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(t => t.length > 0);
+  }
+
+  function buildWordFrequencies(sentencesTokens) {
+    const freq = Object.create(null);
+    for (const tokens of sentencesTokens) {
+      for (const w of tokens) {
+        if (STOP_WORDS.has(w)) continue;
+        freq[w] = (freq[w] || 0) + 1;
+      }
+    }
+    return freq;
+  }
+
+  // ---------------------- Luhn 1958 Summarizer ---------------------- //
+
+  function luhnSummarize(text, numSentences, minFreq, maxGap) {
+    const sentences = splitSentences(text);
+    const tokensPerSentence = sentences.map(s => tokenize(s));
+
+    const freq = buildWordFrequencies(tokensPerSentence);
+    let maxFreq = 0;
+    for (const w in freq) {
+      if (freq[w] > maxFreq) maxFreq = freq[w];
+    }
+
+    // Significant words: frequency >= minFreq
+    const significant = new Set();
+    for (const w in freq) {
+      if (freq[w] >= minFreq) {
+        significant.add(w);
+      }
+    }
+
+    const scores = [];
+    for (let i = 0; i < tokensPerSentence.length; i++) {
+      const tokens = tokensPerSentence[i];
+      const sigPositions = [];
+
+      for (let j = 0; j < tokens.length; j++) {
+        if (significant.has(tokens[j])) {
+          sigPositions.push(j);
+        }
+      }
+
+      if (sigPositions.length === 0) {
+        scores.push({ index: i, score: 0 });
+        continue;
+      }
+
+      let bestClusterScore = 0;
+      let clusterStartIndex = 0;
+
+      for (let k = 1; k <= sigPositions.length; k++) {
+        // Either we are at the end or the gap is too large -> finalize cluster
+        const endOfArray = (k === sigPositions.length);
+        const gapTooBig = !endOfArray &&
+          (sigPositions[k] - sigPositions[k - 1] > maxGap);
+
+        if (endOfArray || gapTooBig) {
+          const clusterSigCount = k - clusterStartIndex;
+          const clusterStartPos = sigPositions[clusterStartIndex];
+          const clusterEndPos = sigPositions[k - 1];
+          const clusterLength = clusterEndPos - clusterStartPos + 1;
+
+          if (clusterLength > 0) {
+            const sFactor = (clusterSigCount * clusterSigCount) / clusterLength;
+            if (sFactor > bestClusterScore) {
+              bestClusterScore = sFactor;
+            }
+          }
+          clusterStartIndex = k;
+        }
+      }
+
+      scores.push({ index: i, score: bestClusterScore });
+    }
+
+    // Sort by score descending
+    const sorted = scores.slice().sort((a, b) => b.score - a.score);
+    const selected = sorted.slice(0, Math.min(numSentences, sorted.length));
+    selected.sort((a, b) => a.index - b.index); // restore original order
+
+    const summarySentences = selected.map(s => ({
+      sentence: sentences[s.index],
+      score: s.score
+    }));
+
+    return { sentences: summarySentences, allScores: scores, originalSentences: sentences };
+  }
+
+  // ---------------------- Edmundson 1969 Summarizer ---------------------- //
+
+  // Cue word lists (bonus and stigma) inspired by the original idea
+  const CUE_BONUS = new Set([
+    "important","significant","conclusion","conclusions","summary","summarize","result",
+    "results","main","chief","prime","principally","noteworthy","notably","aboveall"
+  ]);
+
+  const CUE_STIGMA = new Set([
+    "hardly","impossible","trivial","irrelevant","unimportant","insignificant",
+    "minor","nevertheless","however","although"
+  ]);
+
+  function getTitleWords(titleText) {
+    return tokenize(titleText).filter(w => !STOP_WORDS.has(w));
+  }
+
+  function edmundsonSummarize(text, title, numSentences, weights) {
+    const sentences = splitSentences(text);
+    const N = sentences.length;
+    const tokensPerSentence = sentences.map(s => tokenize(s));
+    const freq = buildWordFrequencies(tokensPerSentence);
+
+    // Determine key words: top K frequent non-stopword terms
+    const freqEntries = Object.entries(freq);
+    freqEntries.sort((a, b) => b[1] - a[1]);
+    const maxKeyWords = Math.max(5, Math.floor(freqEntries.length * 0.1)); // top 10% or at least 5
+    const keyWords = new Set(freqEntries.slice(0, maxKeyWords).map(e => e[0]));
+
+    const titleTokens = getTitleWords(title || "");
+
+    const cueScores = new Array(N).fill(0);
+    const keyScores = new Array(N).fill(0);
+    const titleScores = new Array(N).fill(0);
+    const posScores = new Array(N).fill(0);
+
+    // Precompute title token positions for Title score
+    const titlePositions = Object.create(null);
+    for (let i = 0; i < titleTokens.length; i++) {
+      const w = titleTokens[i];
+      if (!titlePositions[w]) {
+        titlePositions[w] = [];
+      }
+      titlePositions[w].push(i + 1); // 1-based positions
+    }
+
+    // Cue, Key, Title scores
+    for (let i = 0; i < N; i++) {
+      const tokens = tokensPerSentence[i];
+
+      // Cue score: sum +1/-1 depending on bonus/stigma
+      let cScore = 0;
+      for (const w of tokens) {
+        if (CUE_BONUS.has(w)) {
+          cScore += 1;
+        } else if (CUE_STIGMA.has(w)) {
+          cScore -= 1;
+        }
+      }
+      cueScores[i] = cScore;
+
+      // Key score: count of key words
+      let kScore = 0;
+      for (const w of tokens) {
+        if (keyWords.has(w)) {
+          kScore += 1;
+        }
+      }
+      keyScores[i] = kScore;
+
+      // Title score: sum of 1/position for each word overlapping with title
+      let tScore = 0;
+      for (const w of tokens) {
+        const positions = titlePositions[w];
+        if (positions && positions.length > 0) {
+          // Use the best (earliest) occurrence
+          const minPos = Math.min(...positions);
+          tScore += 1 / minPos;
+        }
+      }
+      titleScores[i] = tScore;
+    }
+
+    // Position score: favor early sentences, but not only the first
+    // P_i = 1 - (i / (N-1)), if N>1, else 1
+    for (let i = 0; i < N; i++) {
+      if (N === 1) {
+        posScores[i] = 1;
+      } else {
+        posScores[i] = 1 - (i / (N - 1));
+      }
+    }
+
+    // Normalize each indicator to [0,1] to avoid scale domination
+    function normalizeArray(arr) {
+      const max = Math.max(...arr.map(v => Math.abs(v)));
+      if (max === 0) return arr.map(() => 0);
+      return arr.map(v => v / max);
+    }
+
+    const cueNorm = normalizeArray(cueScores);
+    const keyNorm = normalizeArray(keyScores);
+    const titleNorm = normalizeArray(titleScores);
+    const posNorm = normalizeArray(posScores);
+
+    const combinedScores = [];
+    for (let i = 0; i < N; i++) {
+      const score =
+        weights.wCue * cueNorm[i] +
+        weights.wKey * keyNorm[i] +
+        weights.wTitle * titleNorm[i] +
+        weights.wPos * posNorm[i];
+      combinedScores.push({ index: i, score, breakdown: {
+        cue: cueNorm[i],
+        key: keyNorm[i],
+        title: titleNorm[i],
+        pos: posNorm[i]
+      }});
+    }
+
+    const sorted = combinedScores.slice().sort((a, b) => b.score - a.score);
+    const selected = sorted.slice(0, Math.min(numSentences, sorted.length));
+    selected.sort((a, b) => a.index - b.index);
+
+    const summarySentences = selected.map(s => ({
+      sentence: sentences[s.index],
+      score: s.score,
+      breakdown: s.breakdown
+    }));
+
+    return { sentences: summarySentences, allScores: combinedScores, originalSentences: sentences };
+  }
+
+  // ---------------------- UI Handling & Sample Data ---------------------- //
+
+  const samples = {
+    metro: {
+      title: "City Metro Expansion Plan",
+      text:
+`The city council has approved a major expansion of the metro system after several years of public debate and technical studies. The project will add three new lines and extend two existing lines, connecting dense residential districts with the central business area. Officials argue that the expansion is essential to reduce road congestion, improve air quality, and support future population growth. Construction is scheduled to begin next spring, and the first segments are expected to open to passengers within five years. Some local businesses along the planned routes worry about temporary disruptions caused by excavation and street closures. However, transport planners insist that most heavy work will occur at night to minimize the impact on daily life. Funding for the project will come from a combination of municipal bonds, national infrastructure grants, and a modest increase in local transportation taxes. Community groups have called for transparent reporting on costs and environmental monitoring throughout the construction process. The mayor has described the metro expansion as the most ambitious public works effort the city has undertaken in decades.`
+    },
+    climate: {
+      title: "Climate Change and Urban Heat Islands",
+      text:
+`In many large cities, summer temperatures are rising faster than in surrounding rural areas, a pattern known as the urban heat island effect. Dense clusters of concrete, asphalt, and glass absorb sunlight during the day and release heat slowly at night, causing city centers to remain warm well after sunset. Climate scientists warn that this effect can intensify heat waves and increase health risks for vulnerable residents, particularly those without access to air conditioning. Urban planners are experimenting with reflective roofing materials, tree planting campaigns, and redesigned public spaces to cool neighborhoods. Recent pilot projects have shown that even modest increases in tree canopy can lower local air temperatures by several degrees. Public health officials emphasize that emergency heat plans must include targeted support for elderly people, outdoor workers, and low-income households. As global climate change continues, researchers expect the interaction between rising average temperatures and urban heat islands to become a central challenge for city governments.`
+    },
+    printing: {
+      title: "The Invention of the Printing Press",
+      text:
+`The invention of the movable-type printing press in fifteenth-century Europe is often described as a turning point in the history of communication. Johannes Gutenberg and his collaborators developed a method for casting individual metal letters that could be arranged, inked, and pressed onto paper. This innovation made it far cheaper and faster to produce books compared with traditional manuscript copying by hand. Early printers focused on religious texts, legal documents, and classical works, which found eager audiences among scholars and clergy. Over time, however, printing helped spread new political ideas, scientific discoveries, and popular literature to a broader public. Historians argue that the printing press played a crucial role in the Reformation, the Scientific Revolution, and the rise of modern education systems. Although later technologies would further accelerate the distribution of information, Gutenberg's press remains a symbol of the transition from a manuscript culture to a print-based society.`
+    }
+  };
+
+  const sampleSelectEl = document.getElementById("sampleSelect");
+  const titleInputEl = document.getElementById("titleInput");
+  const inputTextEl = document.getElementById("inputText");
+  const numSentencesEl = document.getElementById("numSentences");
+
+  const luhnOutputEl = document.getElementById("luhnOutput");
+  const luhnErrorEl = document.getElementById("luhnError");
+  const runLuhnBtn = document.getElementById("runLuhn");
+  const showLuhnScoresBtn = document.getElementById("showLuhnScores");
+  const luhnMinFreqEl = document.getElementById("luhnMinFreq");
+  const luhnMaxGapEl = document.getElementById("luhnMaxGap");
+
+  const edOutputEl = document.getElementById("edOutput");
+  const edErrorEl = document.getElementById("edError");
+  const runEdmundsonBtn = document.getElementById("runEdmundson");
+  const showEdmundsonScoresBtn = document.getElementById("showEdmundsonScores");
+  const wCueEl = document.getElementById("wCue");
+  const wKeyEl = document.getElementById("wKey");
+  const wTitleEl = document.getElementById("wTitle");
+  const wPosEl = document.getElementById("wPos");
+
+  sampleSelectEl.addEventListener("change", () => {
+    const v = sampleSelectEl.value;
+    if (v === "none") return;
+    const sample = samples[v];
+    titleInputEl.value = sample.title;
+    inputTextEl.value = sample.text;
+  });
+
+  function clearError(errorEl) {
+    errorEl.style.display = "none";
+    errorEl.textContent = "";
+  }
+
+  function showError(errorEl, message) {
+    errorEl.style.display = "block";
+    errorEl.textContent = message;
+  }
+
+  function renderSummary(outputEl, result, showScores, scoreFormatter) {
+    const { sentences, allScores, originalSentences } = result;
+    if (!sentences || sentences.length === 0) {
+      outputEl.textContent = "(No sentences selected.)";
+      return;
+    }
+
+    let html = "";
+
+    html += "<strong>Summary:</strong>\n";
+    for (const s of sentences) {
+      const scoreNote = showScores
+        ? `<span class="sentence-score">score=${scoreFormatter(s)}</span>`
+        : "";
+      html += `<p class="sentence">${escapeHTML(s.sentence)}${scoreNote}</p>`;
+    }
+
+    if (showScores) {
+      html += "<hr /><strong>All sentence scores:</strong>\n";
+      for (const s of allScores) {
+        const sentText = originalSentences[s.index] || "";
+        const scoreNote = scoreFormatter(s);
+        html += `<p class="sentence">${escapeHTML(sentText)}<span class="sentence-score">score=${scoreNote}</span></p>`;
+      }
+    }
+
+    outputEl.innerHTML = html;
+  }
+
+  function escapeHTML(str) {
+    return str.replace(/[&<>"]/g, function (c) {
+      switch (c) {
+        case "&": return "&amp;";
+        case "<": return "&lt;";
+        case ">": return "&gt;";
+        case "\"": return "&quot;";
+      }
+      return c;
+    });
+  }
+
+  runLuhnBtn.addEventListener("click", () => {
+    clearError(luhnErrorEl);
+    const text = normalizeText(inputTextEl.value);
+    const n = parseInt(numSentencesEl.value, 10);
+    const minFreq = parseInt(luhnMinFreqEl.value, 10);
+    const maxGap = parseInt(luhnMaxGapEl.value, 10);
+
+    if (!text || text.length < 10) {
+      showError(luhnErrorEl, "Please provide some input text (at least a couple of sentences).");
+      return;
+    }
+    if (!Number.isFinite(n) || n <= 0) {
+      showError(luhnErrorEl, "Number of sentences must be a positive integer.");
+      return;
+    }
+    if (!Number.isFinite(minFreq) || minFreq <= 0) {
+      showError(luhnErrorEl, "Min frequency must be a positive integer.");
+      return;
+    }
+    if (!Number.isFinite(maxGap) || maxGap <= 0) {
+      showError(luhnErrorEl, "Max gap must be a positive integer.");
+      return;
+    }
+
+    try {
+      const result = luhnSummarize(text, n, minFreq, maxGap);
+      renderSummary(
+        luhnOutputEl,
+        result,
+        false,
+        s => s.score.toFixed(3)
+      );
+    } catch (e) {
+      console.error(e);
+      showError(luhnErrorEl, "An error occurred during Luhn summarization.");
+    }
+  });
+
+  showLuhnScoresBtn.addEventListener("click", () => {
+    clearError(luhnErrorEl);
+    const text = normalizeText(inputTextEl.value);
+    const n = parseInt(numSentencesEl.value, 10);
+    const minFreq = parseInt(luhnMinFreqEl.value, 10);
+    const maxGap = parseInt(luhnMaxGapEl.value, 10);
+
+    if (!text || text.length < 10) {
+      showError(luhnErrorEl, "Please provide some input text (at least a couple of sentences).");
+      return;
+    }
+
+    try {
+      const result = luhnSummarize(text, n, minFreq, maxGap);
+      renderSummary(
+        luhnOutputEl,
+        result,
+        true,
+        s => s.score.toFixed(3)
+      );
+    } catch (e) {
+      console.error(e);
+      showError(luhnErrorEl, "An error occurred during Luhn summarization.");
+    }
+  });
+
+  runEdmundsonBtn.addEventListener("click", () => {
+    clearError(edErrorEl);
+    const text = normalizeText(inputTextEl.value);
+    const title = titleInputEl.value || "";
+    const n = parseInt(numSentencesEl.value, 10);
+    const wCue = parseFloat(wCueEl.value);
+    const wKey = parseFloat(wKeyEl.value);
+    const wTitle = parseFloat(wTitleEl.value);
+    const wPos = parseFloat(wPosEl.value);
+
+    if (!text || text.length < 10) {
+      showError(edErrorEl, "Please provide some input text (at least a couple of sentences).");
+      return;
+    }
+
+    if (!Number.isFinite(n) || n <= 0) {
+      showError(edErrorEl, "Number of sentences must be a positive integer.");
+      return;
+    }
+
+    const weights = {
+      wCue: Number.isFinite(wCue) ? wCue : 1.0,
+      wKey: Number.isFinite(wKey) ? wKey : 2.0,
+      wTitle: Number.isFinite(wTitle) ? wTitle : 1.5,
+      wPos: Number.isFinite(wPos) ? wPos : 0.7
+    };
+
+    try {
+      const result = edmundsonSummarize(text, title, n, weights);
+      renderSummary(
+        edOutputEl,
+        result,
+        false,
+        s => s.score.toFixed(3)
+      );
+    } catch (e) {
+      console.error(e);
+      showError(edErrorEl, "An error occurred during Edmundson summarization.");
+    }
+  });
+
+  showEdmundsonScoresBtn.addEventListener("click", () => {
+    clearError(edErrorEl);
+    const text = normalizeText(inputTextEl.value);
+    const title = titleInputEl.value || "";
+    const n = parseInt(numSentencesEl.value, 10);
+    const wCue = parseFloat(wCueEl.value);
+    const wKey = parseFloat(wKeyEl.value);
+    const wTitle = parseFloat(wTitleEl.value);
+    const wPos = parseFloat(wPosEl.value);
+
+    if (!text || text.length < 10) {
+      showError(edErrorEl, "Please provide some input text (at least a couple of sentences).");
+      return;
+    }
+
+    const weights = {
+      wCue: Number.isFinite(wCue) ? wCue : 1.0,
+      wKey: Number.isFinite(wKey) ? wKey : 2.0,
+      wTitle: Number.isFinite(wTitle) ? wTitle : 1.5,
+      wPos: Number.isFinite(wPos) ? wPos : 0.7
+    };
+
+    try {
+      const result = edmundsonSummarize(text, title, n, weights);
+      renderSummary(
+        edOutputEl,
+        result,
+        true,
+        s => {
+          if (s.breakdown) {
+            const b = s.breakdown;
+            return `${s.score.toFixed(3)} (cue=${b.c
