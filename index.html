@@ -1,0 +1,1635 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NLP Task Museum — Extractive Summarization (Luhn 1958 · Edmundson 1969)</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#121826; --panel2:#0f1522;
+      --txt:#e6edf3; --muted:#9aa7b2; --line:#233044;
+      --accent:#6ee7ff; --accent2:#a78bfa; --warn:#ffcc66;
+      --good:#86efac; --bad:#fca5a5;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; background:linear-gradient(180deg, #070a0f, var(--bg));
+      color:var(--txt); font-family:var(--sans);
+    }
+    header{
+      padding:18px 18px 8px 18px;
+      border-bottom:1px solid var(--line);
+      position:sticky; top:0; background:rgba(11,15,20,.92);
+      backdrop-filter: blur(10px);
+      z-index: 5;
+    }
+    header h1{ margin:0; font-size:18px; letter-spacing:.2px; }
+    header .sub{ margin-top:6px; color:var(--muted); font-size:12.5px; line-height:1.35; }
+    .wrap{
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:14px;
+      padding:14px 14px 28px 14px;
+    }
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(18,24,38,.95), rgba(15,21,34,.95));
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:12px 12px 10px 12px;
+      border-bottom:1px solid var(--line);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+    }
+    .card .hd .ttl{
+      font-weight:700; font-size:13.5px;
+      display:flex; gap:8px; align-items:center;
+    }
+    .pill{
+      font-size:12px; padding:3px 9px; border-radius:999px;
+      border:1px solid var(--line); color:var(--muted);
+      background: rgba(0,0,0,.18);
+    }
+    .card .bd{ padding:12px; }
+    label{ display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
+    textarea, input, select{
+      width:100%;
+      background: rgba(0,0,0,.22);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      color:var(--txt);
+      outline:none;
+      font-family: var(--sans);
+      font-size:13px;
+    }
+    textarea{ min-height: 150px; resize: vertical; line-height:1.35; }
+    input[type="number"]{ font-family: var(--mono); }
+    .row{
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .row3{
+      display:grid; grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+    }
+    .btns{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    button{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(110,231,255,.15), rgba(167,139,250,.12));
+      color: var(--txt);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    button.secondary{
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-weight:600;
+    }
+    button:active{ transform: translateY(1px); }
+    .hint{
+      color:var(--muted); font-size:12px; line-height:1.35;
+      margin-top:8px;
+    }
+    details{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      background: rgba(0,0,0,.10);
+      margin-top:10px;
+    }
+    details > summary{
+      cursor:pointer;
+      font-weight:700;
+      color: var(--txt);
+      font-size: 12.5px;
+      list-style:none;
+    }
+    details > summary::-webkit-details-marker { display:none; }
+    .mono{ font-family: var(--mono); }
+    .out{
+      padding:12px;
+      display:grid; gap:14px;
+    }
+    .panel{
+      background: rgba(0,0,0,.18);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow:hidden;
+    }
+    .panel .ph{
+      padding:10px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .panel .ph .t{ font-weight:800; font-size:13px; }
+    .panel .ph .r{ color:var(--muted); font-size:12px; }
+    .panel .pb{ padding:12px; }
+    .summary{
+      line-height:1.5;
+      font-size:14px;
+    }
+    .summary h3{
+      margin:14px 0 8px;
+      font-size:12.5px;
+      color: var(--muted);
+      letter-spacing:.2px;
+      text-transform: uppercase;
+    }
+    .summary .heading{
+      margin:14px 0 6px;
+      font-weight:900;
+      font-size:12px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing:.7px;
+    }
+    .summary .sent{
+      margin:0 0 9px;
+    }
+    .grid2{
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns:1fr; }
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    th, td{
+      border-bottom:1px solid rgba(35,48,68,.65);
+      padding:7px 6px;
+      vertical-align:top;
+    }
+    th{ color:var(--muted); font-weight:700; text-align:left; }
+    tr:hover td{ background: rgba(110,231,255,.06); }
+    .tag{
+      font-size:11px; padding:2px 7px; border-radius:999px;
+      border:1px solid rgba(35,48,68,.8);
+      color:var(--muted);
+      display:inline-block;
+      margin-left:6px;
+    }
+    .score{
+      font-family: var(--mono);
+      color: var(--accent);
+    }
+    .bad{ color: var(--bad); }
+    .good{ color: var(--good); }
+    mark{
+      background: rgba(110,231,255,.18);
+      color: var(--txt);
+      padding:1px 3px;
+      border-radius:6px;
+      border:1px solid rgba(110,231,255,.25);
+    }
+    .small{ font-size:12px; color:var(--muted); }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 7px;
+      border: 1px solid var(--line);
+      border-bottom-color: rgba(0,0,0,.5);
+      border-radius: 8px;
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>NLP Task Museum — Extractive Summarization <span class="pill">Luhn 1958</span> <span class="pill">Edmundson 1969</span></h1>
+  <div class="sub">
+    Single-file, offline, vanilla JS. Implements Luhn’s word-consolidation + significance-factor clustering, and Edmundson’s Cue/Key/Title/Location linear weighting.
+    Use the sample articles or paste your own English text.
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- LEFT: Controls -->
+  <section class="card">
+    <div class="hd">
+      <div class="ttl">Controls <span class="tag">input + parameters</span></div>
+      <div class="pill mono" id="statusPill">ready</div>
+    </div>
+    <div class="bd">
+      <label>Algorithm</label>
+      <select id="algo">
+        <option value="luhn">Luhn (1958) — Significant-word clustering</option>
+        <option value="edmundson">Edmundson (1969) — Cue/Key/Title/Location</option>
+      </select>
+
+      <label>Load a sample article</label>
+      <select id="sample">
+        <option value="sample1">Sample 1 — “Tape, Formats, and Failure Modes” (with headings)</option>
+        <option value="sample2">Sample 2 — “Sea Breezes and Urban Heat” (with headings)</option>
+        <option value="sample3">Sample 3 — “DIY CPU Mods as a Social Technology” (with headings)</option>
+      </select>
+
+      <label>Title (used by Edmundson Title method)</label>
+      <input id="title" placeholder="Optional, but recommended for Edmundson Title method" />
+
+      <label>Text (English only)</label>
+      <textarea id="text"></textarea>
+
+      <div id="luhnControls">
+        <details open>
+          <summary>Luhn 1958 parameters</summary>
+
+          <div class="row">
+            <div>
+              <label>Sentence selection mode</label>
+              <select id="luhnMode">
+                <option value="ratio">Top by ratio</option>
+                <option value="count">Top N sentences</option>
+                <option value="cutoff">Score ≥ cutoff</option>
+              </select>
+            </div>
+            <div>
+              <label>Ratio / N / Cutoff</label>
+              <input id="luhnTarget" type="number" step="0.01" value="0.25" />
+            </div>
+          </div>
+
+          <div class="row3">
+            <div>
+              <label>Max non-significant gap (default 4)</label>
+              <input id="luhnGap" type="number" step="1" value="4" />
+            </div>
+            <div>
+              <label>Low-frequency deletion (≤ D)</label>
+              <input id="luhnLowFreq" type="number" step="1" value="1" />
+            </div>
+            <div>
+              <label>Upper-frequency cutoff (≥ C)</label>
+              <input id="luhnHighFreq" type="number" step="1" value="999999" />
+            </div>
+          </div>
+
+          <label>Use Luhn 1958 “letter-by-letter” word consolidation (mismatch letters ≤ 6)</label>
+          <select id="luhnConsolidate">
+            <option value="on" selected>On (paper-accurate)</option>
+            <option value="off">Off</option>
+          </select>
+
+          <label>Common-word deletion list (editable)</label>
+          <details>
+            <summary>Show / edit common words (stop list)</summary>
+            <div class="hint">Used for Luhn’s “common words such as pronouns, prepositions, and articles” deletion stage.</div>
+            <textarea id="stopwords" class="mono" style="min-height:170px;"></textarea>
+          </details>
+
+          <div class="hint">
+            Notes: “Upper-frequency cutoff” removes overly frequent words (paper’s “line C” idea). “Low-frequency deletion” matches “words of a stipulated low frequency were deleted” in the procedure.
+          </div>
+        </details>
+      </div>
+
+      <div id="edmundsonControls" style="display:none;">
+        <details open>
+          <summary>Edmundson 1969 parameters</summary>
+
+          <div class="row">
+            <div>
+              <label>Summary length mode</label>
+              <select id="edmMode">
+                <option value="ratio" selected>Ratio of sentences (paper uses 25%)</option>
+                <option value="count">Top N sentences</option>
+              </select>
+            </div>
+            <div>
+              <label>Ratio / N</label>
+              <input id="edmTarget" type="number" step="0.01" value="0.25" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Preset weights</label>
+              <select id="edmPreset">
+                <option value="all" selected>Use all methods (C + K + T + L)</option>
+                <option value="ctl">Paper-favored variant (C + T + L, omit Key)</option>
+                <option value="cueOnly">Cue only</option>
+                <option value="locusOnly">Location only</option>
+              </select>
+            </div>
+            <div>
+              <label>Key glossary coverage (% of total word occurrences)</label>
+              <input id="edmKeyPct" type="number" step="1" value="15" />
+            </div>
+          </div>
+
+          <label>Linear combination coefficients: Score = aC·C + aK·K + aT·T + aL·L</label>
+          <div class="row3">
+            <div><input id="aC" type="number" step="1" value="1" /></div>
+            <div><input id="aK" type="number" step="1" value="1" /></div>
+            <div><input id="aT" type="number" step="1" value="1" /></div>
+          </div>
+          <div class="row">
+            <div><label>aL</label><input id="aL" type="number" step="1" value="1" /></div>
+            <div>
+              <label>Title vs heading weights (coprime recommended)</label>
+              <div class="row">
+                <input id="titleW" type="number" step="1" value="5" />
+                <input id="headingW" type="number" step="1" value="3" />
+              </div>
+            </div>
+          </div>
+
+          <label>Ordinal weights (Location method): O1=first paragraph, O2=last paragraph, O3=first sentence of paragraph, O4=last sentence of paragraph</label>
+          <div class="row3">
+            <div><input id="O1" type="number" step="1" value="1" /></div>
+            <div><input id="O2" type="number" step="1" value="1" /></div>
+            <div><input id="O3" type="number" step="1" value="1" /></div>
+          </div>
+          <div class="row">
+            <div><label>O4</label><input id="O4" type="number" step="1" value="1" /></div>
+            <div class="hint">Headings are detected from lines that look like headings (ALL CAPS, Markdown “##”, or ending with “:”).</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Edmundson dictionaries (Cue + Heading)</summary>
+          <div class="grid2">
+            <div>
+              <label>Bonus words (each line: <span class="mono">word</span> or <span class="mono">word weight</span>)</label>
+              <textarea id="bonus" class="mono" style="min-height:190px;"></textarea>
+              <div class="hint">If no weight is provided, defaults to +1.</div>
+            </div>
+            <div>
+              <label>Stigma words (each line: <span class="mono">word</span> or <span class="mono">word weight</span>)</label>
+              <textarea id="stigma" class="mono" style="min-height:190px;"></textarea>
+              <div class="hint">If no weight is provided, defaults to −1.</div>
+            </div>
+          </div>
+          <label>Null words (ignored; each line: word). These also act like stop-words for Title glossary.</label>
+          <textarea id="nullw" class="mono" style="min-height:140px;"></textarea>
+
+          <label>Heading dictionary (Location method; each line: <span class="mono">word weight</span>)</label>
+          <textarea id="headdict" class="mono" style="min-height:140px;"></textarea>
+        </details>
+      </div>
+
+      <div class="btns">
+        <button id="runBtn">Run summarizer</button>
+        <button class="secondary" id="copyBtn">Copy summary</button>
+        <button class="secondary" id="resetBtn">Reset to defaults</button>
+      </div>
+
+      <div class="hint">
+        Tips: try <span class="kbd">Edmundson → preset “C+T+L”</span> and compare with <span class="kbd">all methods</span>.
+        For Luhn, adjust <span class="kbd">gap</span> (4/5) and the <span class="kbd">cutoff</span>.
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: Output -->
+  <section class="card">
+    <div class="hd">
+      <div class="ttl">Output <span class="tag">summary + diagnostics</span></div>
+      <div class="pill mono" id="statsPill">—</div>
+    </div>
+    <div class="out">
+      <div class="panel">
+        <div class="ph">
+          <div class="t">Summary</div>
+          <div class="r" id="summaryMeta">—</div>
+        </div>
+        <div class="pb summary" id="summary"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="ph">
+            <div class="t">Sentence scores</div>
+            <div class="r">sorted by score</div>
+          </div>
+          <div class="pb" style="overflow:auto; max-height: 360px;">
+            <table id="sentTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Score</th>
+                  <th>Picked</th>
+                  <th>Sentence</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph">
+            <div class="t" id="rightDiagTitle">Diagnostics</div>
+            <div class="r" id="rightDiagMeta">—</div>
+          </div>
+          <div class="pb" id="diag" style="overflow:auto; max-height: 360px;"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph">
+          <div class="t">Original text (selected sentences highlighted)</div>
+          <div class="r small">Heading lines kept as-is</div>
+        </div>
+        <div class="pb" id="highlighted" style="white-space:pre-wrap; line-height:1.45;"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* =========================
+   Samples (original text)
+   ========================= */
+const SAMPLES = [
+  {
+    id:"sample1",
+    title:"Tape, Formats, and Failure Modes in Early Computing",
+    text:
+`INTRODUCTION
+In early data processing, storage was slow, fragile, and expensive. Engineers therefore treated formatting as a first-class design problem. When the physical medium is unreliable, the document structure matters: headings, paragraphs, and consistent punctuation can be the difference between recoverable data and nonsense.
+
+METHOD
+A typical workflow converted a printed report into machine-readable form. Operators typed the text, replaced unavailable punctuation with a substitute, and then ran programs that separated the text into words and sentences. After that, extremely common words were removed, because they carry little topical meaning. Next, related word forms were consolidated so that similar and similarity counted as one notion rather than two.
+
+RESULTS
+Two practical consequences followed. First, word frequency became a workable signal: writers repeat terms when they elaborate a central argument. Second, proximity mattered. If two important terms occur close together inside a sentence, the sentence is more likely to express a compact idea. As a result, a system can assign a numerical score to each sentence and extract the highest-scoring ones.
+
+CONCLUSION
+This approach is not perfect. However, it is remarkably transparent: you can see why a sentence was chosen, and you can tune the cutoff to produce a shorter or longer abstract. Even today, this clarity is valuable when you need controllable summaries rather than black-box generation.`
+  },
+  {
+    id:"sample2",
+    title:"Sea Breezes and Urban Heat: A Short Explainer",
+    text:
+`ABSTRACT
+Cities often run warmer than nearby rural areas, a pattern widely known as the urban heat island. The effect is significant because it changes energy demand, health risk, and local wind patterns.
+
+BACKGROUND
+During the day, asphalt and concrete store heat efficiently. At night, those surfaces release heat slowly, so the air remains warmer. In contrast, vegetation cools the air through shade and evaporation. This difference can be especially important during heat waves.
+
+KEY MECHANISM
+A sea breeze forms when land warms faster than water. Warm air rises over land, and cooler air moves inland to replace it. If the city is much warmer than its surroundings, the pressure gradient can increase and the breeze can arrive earlier. However, tall buildings can also disrupt flow and create turbulence.
+
+DISCUSSION
+The greatest uncertainty is often the boundary layer: small changes in humidity, cloud cover, or regional wind can flip the outcome. Therefore, observational campaigns focus on vertical profiles and repeated measurements.
+
+CONCLUSIONS
+Urban design choices—trees, reflective roofs, and open corridors—can meaningfully reduce night-time heat. In conclusion, the most effective interventions are usually local, practical, and scalable.`
+  },
+  {
+    id:"sample3",
+    title:"DIY CPU Mods as a Social Technology",
+    text:
+`INTRODUCTION
+Hardware mod scenes are not only technical. They also build status, trust, and a shared language. A successful mod becomes a story: who found the trick first, who proved stability, and who sold a working bundle.
+
+WHAT CHANGED
+As platforms matured, manufacturers locked down more of the stack. Microcode, signed firmware, and tighter power limits made some shortcuts impossible. Nevertheless, the community adapted: they documented pin mods, mapped out strap resistors, and tested borderline configurations.
+
+WHY IT SPREAD
+The appeal is obvious. A cheap part can sometimes perform like a more expensive one. That result feels glorious, even when the method is messy. In addition, public benchmarks act as a scoreboard, so one stable configuration can become famous overnight.
+
+LIMITS
+Not every hack is wise. Some practices are risky, and the least reliable parts create the most drama. People may exaggerate results, and failures are quietly deleted. Therefore, careful logging and repeatable tests are essential.
+
+CONCLUSION
+In the end, the scene is a mix of engineering and theater. It teaches practical constraints, and it also exposes the economics of scarcity. Most importantly, it shows how knowledge circulates when formal support is absent.`
+  },
+];
+
+/* =========================
+   Utilities: tokenization
+   ========================= */
+function normNewlines(s){ return (s||"").replace(/\r\n/g,"\n").replace(/\r/g,"\n"); }
+
+function wordsOf(text){
+  // returns lowercase word tokens (letters + optional apostrophe segment)
+  const re = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
+  const out = [];
+  const t = text || "";
+  let m;
+  while((m = re.exec(t)) !== null){
+    out.push(m[0].toLowerCase());
+  }
+  return out;
+}
+
+function splitIntoSentences(text){
+  // Heuristic sentence splitter (no external libs).
+  // Respects common abbreviations and decimals reasonably well.
+  const abbr = new Set([
+    "mr","mrs","ms","dr","prof","sr","jr","st","vs","etc","e.g","i.e","fig","no","dept",
+    "u.s","u.k","u.n","jan","feb","mar","apr","jun","jul","aug","sep","sept","oct","nov","dec"
+  ]);
+
+  const t = (text||"").replace(/\s+/g, (m)=> m.includes("\n") ? "\n" : " ");
+  const sentences = [];
+  let buf = "";
+
+  function tailWordBeforePeriod(b){
+    // last token possibly like "e.g." or "U.S."
+    const tail = b.slice(Math.max(0, b.length-40)).trim();
+    // acronym like U.S. or U.S.A.
+    if (/(?:\b[A-Z]\.){2,}$/.test(tail)) return {type:"acronym"};
+    const m = tail.match(/(\b[A-Za-z]+(?:\.[A-Za-z]+)*)\.$/);
+    if(!m) return null;
+    return {type:"word", w:m[1].toLowerCase()};
+  }
+
+  for(let i=0;i<t.length;i++){
+    const ch = t[i];
+    buf += ch;
+
+    const isEndPunct = (ch==="." || ch==="!" || ch==="?");
+    if(!isEndPunct) continue;
+
+    // handle ellipsis
+    if(ch==="." && t[i+1]==="." ){
+      continue;
+    }
+
+    // check decimal number like 3.14
+    const prev = t[i-1] || "";
+    const next = t[i+1] || "";
+    if(ch==="." && /\d/.test(prev) && /\d/.test(next)){
+      continue;
+    }
+
+    if(ch==="." ){
+      const info = tailWordBeforePeriod(buf);
+      if(info && info.type==="acronym"){
+        // could be sentence end, but keep conservative: don't split unless next is newline or end
+        if(next === "\n" || next === "" ) {
+          const s = buf.trim();
+          if(s) sentences.push(s);
+          buf = "";
+        }
+        continue;
+      }
+      if(info && info.type==="word"){
+        const w = info.w;
+        if(abbr.has(w)){
+          continue;
+        }
+        // initial like "A."
+        if(/^\b[a-z]\b$/.test(w)) continue;
+      }
+    }
+
+    // boundary if next is whitespace/newline/end or quote then whitespace
+    const look = t.slice(i+1, i+6);
+    if(look === "") {
+      const s = buf.trim();
+      if(s) sentences.push(s);
+      buf = "";
+      continue;
+    }
+
+    const m = look.match(/^\s+|^[\n]/);
+    const m2 = look.match(/^[)"'\]]\s/);
+
+    if(m || m2 || next==="\n"){
+      const s = buf.trim();
+      if(s) sentences.push(s);
+      buf = "";
+    }
+  }
+
+  const rest = buf.trim();
+  if(rest) sentences.push(rest);
+  return sentences;
+}
+
+/* =========================
+   Luhn 1958: word consolidation
+   ========================= */
+function commonPrefixLen(a,b){
+  const n = Math.min(a.length,b.length);
+  let i=0;
+  while(i<n && a[i]===b[i]) i++;
+  return i;
+}
+
+function luhnConsolidationMap(uniqueWordsSorted){
+  // Paper procedure: compare pairs of succeeding words in alphabetized list;
+  // from first mismatch, combined count of subsequent non-similar letters of both words.
+  // if count <= 6, treat as same notion (merge).
+  // We implement transitive closure via union-find.
+  const n = uniqueWordsSorted.length;
+  const parent = new Array(n);
+  const rank = new Array(n).fill(0);
+  for(let i=0;i<n;i++) parent[i]=i;
+
+  function find(x){
+    while(parent[x]!==x){ parent[x]=parent[parent[x]]; x=parent[x]; }
+    return x;
+  }
+  function union(a,b){
+    let ra=find(a), rb=find(b);
+    if(ra===rb) return;
+    if(rank[ra]<rank[rb]) parent[ra]=rb;
+    else if(rank[ra]>rank[rb]) parent[rb]=ra;
+    else { parent[rb]=ra; rank[ra]++; }
+  }
+
+  for(let i=0;i<n-1;i++){
+    const w1 = uniqueWordsSorted[i];
+    const w2 = uniqueWordsSorted[i+1];
+    const p = commonPrefixLen(w1,w2);
+    const mismatch = (w1.length - p) + (w2.length - p);
+    if(mismatch <= 6){
+      union(i,i+1);
+    }
+  }
+
+  // representative: smallest index word in the set (alphabetical earliest)
+  const repIndex = new Map();
+  for(let i=0;i<n;i++){
+    const r = find(i);
+    if(!repIndex.has(r) || i < repIndex.get(r)) repIndex.set(r,i);
+  }
+
+  const map = new Map();
+  for(let i=0;i<n;i++){
+    const r = find(i);
+    const rep = uniqueWordsSorted[repIndex.get(r)];
+    map.set(uniqueWordsSorted[i], rep);
+  }
+  return map;
+}
+
+/* =========================
+   Parsing: headings + paragraphs
+   ========================= */
+function isHeadingLine(line){
+  const s = line.trim();
+  if(!s) return false;
+  if(/^#{1,6}\s+/.test(s)) return true;
+  if(/:\s*$/.test(s) && s.length <= 80) return true;
+  // ALL CAPS-ish headings
+  const letters = s.replace(/[^A-Za-z]/g,"");
+  if(letters.length >= 3 && letters === letters.toUpperCase() && s.length <= 80) return true;
+  return false;
+}
+
+function stripHeadingMarkup(line){
+  let s = line.trim();
+  s = s.replace(/^#{1,6}\s+/,"");
+  s = s.replace(/:\s*$/,"");
+  return s.trim();
+}
+
+function parseDocumentWithHeadings(bodyText){
+  const text = normNewlines(bodyText||"");
+  const lines = text.split("\n");
+
+  let currentHeading = null;
+  let paraLines = [];
+  const paragraphs = [];
+  const headingsInOrder = []; // for Title glossary
+
+  function pushPara(){
+    const joined = paraLines.join(" ").replace(/\s+/g," ").trim();
+    if(joined){
+      paragraphs.push({ heading: currentHeading, text: joined });
+    }
+    paraLines = [];
+  }
+
+  for(const rawLine of lines){
+    const line = rawLine.replace(/\t/g," ").trimEnd();
+    if(!line.trim()){
+      pushPara();
+      continue;
+    }
+    if(isHeadingLine(line)){
+      pushPara();
+      const h = stripHeadingMarkup(line);
+      currentHeading = h || currentHeading;
+      if(h) headingsInOrder.push(h);
+      continue;
+    }
+    paraLines.push(line.trim());
+  }
+  pushPara();
+
+  // Sentence segmentation per paragraph
+  let allSentences = [];
+  paragraphs.forEach((p, pi)=>{
+    const sents = splitIntoSentences(p.text);
+    const sentObjs = sents.map((s, si)=>({
+      text:s,
+      heading:p.heading,
+      paragraphIndex:pi,
+      sentenceIndexInParagraph:si,
+      paragraphSentenceCount:sents.length
+    }));
+    allSentences = allSentences.concat(sentObjs);
+  });
+
+  return { paragraphs, headingsInOrder, sentences: allSentences };
+}
+
+/* =========================
+   Edmundson dictionaries parsing
+   ========================= */
+function parseWeightedWordList(text, defaultWeight){
+  // Each non-empty line: "word", "word weight", "word=weight"
+  // # starts comment
+  const map = new Map();
+  const lines = normNewlines(text||"").split("\n");
+  for(let line of lines){
+    line = line.trim();
+    if(!line) continue;
+    if(line.startsWith("#")) continue;
+    const eq = line.split("=");
+    if(eq.length === 2){
+      const w = eq[0].trim().toLowerCase();
+      const val = Number(eq[1].trim());
+      if(w) map.set(w, Number.isFinite(val) ? val : defaultWeight);
+      continue;
+    }
+    const parts = line.split(/\s+/);
+    const w = (parts[0]||"").toLowerCase();
+    if(!w) continue;
+    if(parts.length >= 2){
+      const val = Number(parts[1]);
+      map.set(w, Number.isFinite(val) ? val : defaultWeight);
+    } else {
+      map.set(w, defaultWeight);
+    }
+  }
+  return map;
+}
+
+function parseNullList(text){
+  const set = new Set();
+  const lines = normNewlines(text||"").split("\n");
+  for(let line of lines){
+    line = line.trim();
+    if(!line) continue;
+    if(line.startsWith("#")) continue;
+    set.add(line.toLowerCase());
+  }
+  return set;
+}
+
+/* =========================
+   Luhn summarizer
+   ========================= */
+function luhnSummarize(rawText, opts){
+  const stopSet = new Set(opts.stopwords.map(w=>w.toLowerCase()));
+  const gap = Math.max(0, opts.gap|0);
+  const lowFreq = Math.max(0, opts.lowFreq|0);
+  const highFreq = Math.max(1, opts.highFreq|0);
+
+  // parse sentences (ignoring headings: treat everything as text for Luhn)
+  const text = normNewlines(rawText||"").replace(/\n+/g,"\n");
+  const sentences = splitIntoSentences(text.replace(/\n/g," "));
+  const sentenceObjs = sentences.map((s, idx)=>({ id: idx, text: s }));
+
+  // tokenize all words, remove stopwords for frequency list (as in paper)
+  let allWords = wordsOf(text);
+  allWords = allWords.filter(w => !stopSet.has(w));
+
+  // unique + sort
+  const uniq = Array.from(new Set(allWords)).sort();
+
+  // optional consolidation (paper-accurate)
+  let consolidation = null;
+  if(opts.consolidate){
+    consolidation = luhnConsolidationMap(uniq);
+  }
+
+  // frequency counts (after consolidation if enabled)
+  const freq = new Map();
+  for(const w0 of allWords){
+    const w = consolidation ? (consolidation.get(w0) || w0) : w0;
+    freq.set(w, (freq.get(w)||0)+1);
+  }
+
+  // significant words:
+  // - delete low frequency words (<= lowFreq)
+  // - delete very frequent words (>= highFreq) (line C concept)
+  const significant = new Set();
+  for(const [w, c] of freq.entries()){
+    if(c <= lowFreq) continue;
+    if(c >= highFreq) continue;
+    significant.add(w);
+  }
+
+  // sentence scoring with clusters
+  function scoreSentence(sentenceText){
+    const toks0 = wordsOf(sentenceText);
+    const toks = toks0.map(w=> consolidation ? (consolidation.get(w)||w) : w);
+    const sigFlags = toks.map(w => significant.has(w));
+    let best = 0;
+
+    let clusterStart = -1;
+    let lastSig = -1;
+    let sigCount = 0;
+
+    for(let i=0;i<toks.length;i++){
+      if(!sigFlags[i]) continue;
+      if(clusterStart === -1){
+        clusterStart = i;
+        lastSig = i;
+        sigCount = 1;
+      } else {
+        const nonsigBetween = i - lastSig - 1;
+        if(nonsigBetween <= gap){
+          lastSig = i;
+          sigCount++;
+        } else {
+          const totalWords = (lastSig - clusterStart + 1);
+          const score = (sigCount*sigCount) / totalWords;
+          if(score > best) best = score;
+
+          clusterStart = i;
+          lastSig = i;
+          sigCount = 1;
+        }
+      }
+    }
+    if(clusterStart !== -1){
+      const totalWords = (lastSig - clusterStart + 1);
+      const score = (sigCount*sigCount) / totalWords;
+      if(score > best) best = score;
+    }
+    return best;
+  }
+
+  const scored = sentenceObjs.map(s => ({...s, score: scoreSentence(s.text)}));
+  const ranked = [...scored].sort((a,b)=> b.score - a.score || a.id - b.id);
+
+  // selection
+  let picked = new Set();
+  if(opts.mode === "cutoff"){
+    const cutoff = Number(opts.target);
+    for(const s of ranked){
+      if(s.score >= cutoff) picked.add(s.id);
+    }
+  } else if(opts.mode === "count"){
+    const n = Math.max(1, Math.floor(Number(opts.target)));
+    ranked.slice(0,n).forEach(s => picked.add(s.id));
+  } else { // ratio
+    const r = Number(opts.target);
+    const n = Math.max(1, Math.ceil(r * ranked.length));
+    ranked.slice(0,n).forEach(s => picked.add(s.id));
+  }
+
+  const pickedInOrder = scored.filter(s => picked.has(s.id));
+
+  // diagnostics: top significant words
+  const sigList = Array.from(significant).map(w=>({w, c: freq.get(w)||0}))
+    .sort((a,b)=> b.c - a.c || a.w.localeCompare(b.w))
+    .slice(0, 60);
+
+  return {
+    algo:"luhn",
+    sentences: scored,
+    ranked,
+    picked,
+    pickedInOrder,
+    significantWords: sigList,
+    meta: {
+      totalSentences: scored.length,
+      pickedSentences: pickedInOrder.length,
+      gap,
+      lowFreq,
+      highFreq,
+      consolidate: !!opts.consolidate
+    }
+  };
+}
+
+/* =========================
+   Edmundson summarizer
+   ========================= */
+function edmundsonSummarize(title, body, opts){
+  const doc = parseDocumentWithHeadings(body);
+  const sentences = doc.sentences;
+
+  const bonus = parseWeightedWordList(opts.bonusText, +1);
+  const stigma = parseWeightedWordList(opts.stigmaText, -1);
+  const nullSet = parseNullList(opts.nullText);
+  const headDict = parseWeightedWordList(opts.headingDictText, +1);
+
+  // cue dictionary: bonus+stigma+null (null has 0)
+  const cue = new Map();
+  for(const [w,val] of bonus.entries()) cue.set(w,val);
+  for(const [w,val] of stigma.entries()) cue.set(w,val);
+  for(const w of nullSet) cue.set(w, 0);
+
+  // Title glossary: non-null words from title + headings
+  const titleW = Math.max(0, opts.titleW|0);
+  const headingW = Math.max(0, opts.headingW|0);
+  const titleGloss = new Map();
+  for(const w of wordsOf(title||"")){
+    if(nullSet.has(w)) continue;
+    titleGloss.set(w, Math.max(titleGloss.get(w)||0, titleW));
+  }
+  for(const h of doc.headingsInOrder){
+    for(const w of wordsOf(h)){
+      if(nullSet.has(w)) continue;
+      titleGloss.set(w, Math.max(titleGloss.get(w)||0, headingW));
+    }
+  }
+
+  // Heading weights per heading text
+  const headingWeightCache = new Map();
+  function headingWeight(headingText){
+    const key = headingText || "";
+    if(headingWeightCache.has(key)) return headingWeightCache.get(key);
+    let sum = 0;
+    for(const w of wordsOf(headingText||"")){
+      if(headDict.has(w)) sum += headDict.get(w);
+    }
+    headingWeightCache.set(key, sum);
+    return sum;
+  }
+
+  // Ordinal weights
+  const O1 = opts.O1|0, O2 = opts.O2|0, O3 = opts.O3|0, O4 = opts.O4|0;
+  const lastParaIndex = doc.paragraphs.length ? (doc.paragraphs.length - 1) : 0;
+
+  // Key glossary creation
+  const allBodyWords = wordsOf(body);
+  const totalOccurrences = allBodyWords.length;
+
+  // frequency of non-cue words
+  const nonCueFreq = new Map();
+  for(const w of allBodyWords){
+    if(cue.has(w)) continue;
+    nonCueFreq.set(w, (nonCueFreq.get(w)||0)+1);
+  }
+
+  // sort non-cue words by frequency desc
+  const nonCueSorted = Array.from(nonCueFreq.entries())
+    .map(([w,c])=>({w,c}))
+    .sort((a,b)=> b.c - a.c || a.w.localeCompare(b.w));
+
+  const keyPct = Math.max(0, Math.min(100, Number(opts.keyPct)));
+  const targetCount = (keyPct/100) * totalOccurrences;
+
+  let cum = 0;
+  let freqThreshold = Infinity;
+  for(const item of nonCueSorted){
+    cum += item.c;
+    freqThreshold = item.c;
+    if(cum >= targetCount) break;
+  }
+  if(!Number.isFinite(freqThreshold)) freqThreshold = Infinity;
+  const keyGloss = new Map();
+  for(const item of nonCueSorted){
+    if(item.c >= freqThreshold){
+      keyGloss.set(item.w, item.c);
+    } else {
+      break;
+    }
+  }
+
+  // sentence-level scoring
+  const aC = opts.aC|0, aK = opts.aK|0, aT = opts.aT|0, aL = opts.aL|0;
+
+  function cueScore(sent){
+    let s = 0;
+    for(const w of wordsOf(sent)){
+      if(cue.has(w)) s += cue.get(w);
+    }
+    return s;
+  }
+  function keyScore(sent){
+    let s = 0;
+    for(const w of wordsOf(sent)){
+      if(keyGloss.has(w)) s += keyGloss.get(w);
+    }
+    return s;
+  }
+  function titleScore(sent){
+    let s = 0;
+    for(const w of wordsOf(sent)){
+      if(titleGloss.has(w)) s += titleGloss.get(w);
+    }
+    return s;
+  }
+  function locationScore(sentObj){
+    const hw = headingWeight(sentObj.heading);
+    let ow = 0;
+    if(sentObj.paragraphIndex === 0) ow += O1;
+    if(sentObj.paragraphIndex === lastParaIndex) ow += O2;
+    if(sentObj.sentenceIndexInParagraph === 0) ow += O3;
+    if(sentObj.sentenceIndexInParagraph === (sentObj.paragraphSentenceCount - 1)) ow += O4;
+    return hw + ow;
+  }
+
+  const scored = sentences.map((s, idx)=>{
+    const C = cueScore(s.text);
+    const K = keyScore(s.text);
+    const T = titleScore(s.text);
+    const L = locationScore(s);
+    const score = aC*C + aK*K + aT*T + aL*L;
+    return {
+      id: idx,
+      text: s.text,
+      heading: s.heading,
+      paragraphIndex: s.paragraphIndex,
+      sentenceIndexInParagraph: s.sentenceIndexInParagraph,
+      paragraphSentenceCount: s.paragraphSentenceCount,
+      parts: {C,K,T,L},
+      score
+    };
+  });
+
+  const ranked = [...scored].sort((a,b)=> b.score - a.score || a.id - b.id);
+
+  let nPick = 1;
+  if(opts.mode === "count"){
+    nPick = Math.max(1, Math.floor(Number(opts.target)));
+  } else {
+    const r = Number(opts.target);
+    nPick = Math.max(1, Math.ceil(r * ranked.length));
+  }
+
+  const picked = new Set(ranked.slice(0,nPick).map(x=>x.id));
+  const pickedInOrder = scored.filter(s => picked.has(s.id));
+
+  // diagnostics: show top key words
+  const keyTop = Array.from(keyGloss.entries())
+    .map(([w,c])=>({w,c}))
+    .sort((a,b)=> b.c - a.c || a.w.localeCompare(b.w))
+    .slice(0, 60);
+
+  return {
+    algo:"edmundson",
+    title: title || "",
+    doc,
+    sentences: scored,
+    ranked,
+    picked,
+    pickedInOrder,
+    keyGlossTop: keyTop,
+    meta:{
+      totalSentences: scored.length,
+      pickedSentences: pickedInOrder.length,
+      keyPct,
+      keyFreqThreshold: freqThreshold,
+      coeffs:{aC,aK,aT,aL},
+      ordinal:{O1,O2,O3,O4},
+      titleWeights:{titleW, headingW}
+    }
+  };
+}
+
+/* =========================
+   Rendering
+   ========================= */
+function esc(s){
+  return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderSummary(result){
+  const el = document.getElementById("summary");
+  const meta = document.getElementById("summaryMeta");
+  const stats = document.getElementById("statsPill");
+
+  meta.textContent = `${result.meta.pickedSentences}/${result.meta.totalSentences} sentences selected`;
+  stats.textContent = `${result.algo}`;
+
+  if(result.algo === "luhn"){
+    let html = `<h3>Selected sentences (Luhn 1958)</h3>`;
+    for(const s of result.pickedInOrder){
+      html += `<p class="sent"><span class="score">(${s.score.toFixed(2)})</span> ${esc(s.text)}</p>`;
+    }
+    el.innerHTML = html || "<div class='small'>No sentences selected.</div>";
+  } else {
+    let html = `<h3>Title</h3><div class="sent">${esc(result.title || "(no title)")}</div>`;
+    let currentHeading = null;
+    for(const s of result.pickedInOrder){
+      if(s.heading && s.heading !== currentHeading){
+        currentHeading = s.heading;
+        html += `<div class="heading">${esc(currentHeading)}</div>`;
+      } else if(!s.heading && currentHeading !== null){
+        currentHeading = null;
+        html += `<div class="heading">(no heading)</div>`;
+      }
+      const {C,K,T,L} = s.parts;
+      html += `<p class="sent"><span class="score">(${s.score})</span> <span class="small">C=${C}, K=${K}, T=${T}, L=${L}</span><br/>${esc(s.text)}</p>`;
+    }
+    el.innerHTML = html || "<div class='small'>No sentences selected.</div>";
+  }
+}
+
+function renderSentenceTable(result){
+  const tbody = document.querySelector("#sentTable tbody");
+  tbody.innerHTML = "";
+  const rows = result.ranked.map((s, rankIdx)=>{
+    const picked = result.picked.has(s.id);
+    const score = (result.algo==="luhn") ? s.score.toFixed(2) : String(s.score);
+    const sent = s.text || "";
+    return `
+      <tr>
+        <td class="mono">${rankIdx+1}</td>
+        <td class="score">${esc(score)}</td>
+        <td class="mono">${picked ? "✓" : ""}</td>
+        <td>${esc(sent)}</td>
+      </tr>`;
+  }).join("");
+  tbody.innerHTML = rows;
+}
+
+function renderDiagnostics(result){
+  const diag = document.getElementById("diag");
+  const ttl = document.getElementById("rightDiagTitle");
+  const meta = document.getElementById("rightDiagMeta");
+
+  if(result.algo === "luhn"){
+    ttl.textContent = "Diagnostics — significant words";
+    meta.textContent = `gap=${result.meta.gap}, low≤${result.meta.lowFreq}, high≥${result.meta.highFreq}, consolidate=${result.meta.consolidate}`;
+    const items = result.significantWords.map(x=>
+      `<tr><td class="mono">${esc(x.w)}</td><td class="mono">${x.c}</td></tr>`
+    ).join("");
+    diag.innerHTML = `
+      <div class="small">Top significant words (after deletions).</div>
+      <table>
+        <thead><tr><th>Word</th><th>Freq</th></tr></thead>
+        <tbody>${items || ""}</tbody>
+      </table>
+    `;
+  } else {
+    ttl.textContent = "Diagnostics — key glossary";
+    meta.textContent = `keyPct=${result.meta.keyPct}% (threshold freq ≥ ${result.meta.keyFreqThreshold})`;
+    const items = result.keyGlossTop.map(x=>
+      `<tr><td class="mono">${esc(x.w)}</td><td class="mono">${x.c}</td></tr>`
+    ).join("");
+    diag.innerHTML = `
+      <div class="small">
+        Key glossary words (non-cue) with weights = frequency, selected by cumulative coverage rule.
+      </div>
+      <table>
+        <thead><tr><th>Word</th><th>Weight</th></tr></thead>
+        <tbody>${items || ""}</tbody>
+      </table>
+      <div class="hint">
+        Coefficients: aC=${result.meta.coeffs.aC}, aK=${result.meta.coeffs.aK}, aT=${result.meta.coeffs.aT}, aL=${result.meta.coeffs.aL}.
+      </div>
+    `;
+  }
+}
+
+function renderHighlightedOriginal(rawText, pickedSentencesInOrder){
+  // Highlight by replacing exact sentence occurrences (best-effort, first match only)
+  let text = normNewlines(rawText||"");
+  // Keep headings and original newlines.
+  for(const s of pickedSentencesInOrder){
+    const needle = s.text;
+    const idx = text.indexOf(needle);
+    if(idx >= 0){
+      const before = text.slice(0, idx);
+      const mid = text.slice(idx, idx + needle.length);
+      const after = text.slice(idx + needle.length);
+      text = before + "««HIGHLIGHT_START»»" + mid + "««HIGHLIGHT_END»»" + after;
+    }
+  }
+  const html = esc(text)
+    .replace(/««HIGHLIGHT_START»»/g, "<mark>")
+    .replace(/««HIGHLIGHT_END»»/g, "</mark>");
+  document.getElementById("highlighted").innerHTML = html;
+}
+
+/* =========================
+   Defaults
+   ========================= */
+const DEFAULT_STOPWORDS = `
+a
+about
+above
+after
+again
+against
+all
+am
+an
+and
+any
+are
+as
+at
+be
+because
+been
+before
+being
+below
+between
+both
+but
+by
+can
+could
+did
+do
+does
+doing
+down
+during
+each
+few
+for
+from
+further
+had
+has
+have
+having
+he
+her
+here
+hers
+herself
+him
+himself
+his
+how
+i
+if
+in
+into
+is
+it
+its
+itself
+just
+me
+more
+most
+my
+myself
+no
+nor
+not
+now
+of
+off
+on
+once
+only
+or
+other
+our
+ours
+ourselves
+out
+over
+own
+same
+she
+should
+so
+some
+such
+than
+that
+the
+their
+theirs
+them
+themselves
+then
+there
+these
+they
+this
+those
+through
+to
+too
+under
+until
+up
+very
+was
+we
+were
+what
+when
+where
+which
+while
+who
+whom
+why
+with
+would
+you
+your
+yours
+yourself
+yourselves
+`.trim();
+
+const DEFAULT_BONUS = `
+significant 2
+important 2
+most 1
+greatest 2
+meaningful 2
+therefore 1
+thus 1
+hence 1
+in conclusion 0
+conclusion 1
+result 1
+results 1
+shows 1
+demonstrates 1
+clearly 1
+remarkably 1
+notably 1
+especially 1
+essential 1
+`.trim();
+
+const DEFAULT_STIGMA = `
+hardly -2
+impossible -2
+maybe -1
+perhaps -1
+uncertain -1
+least -1
+minor -1
+insignificant -2
+unlikely -1
+`.trim();
+
+const DEFAULT_NULL = `
+the
+a
+an
+and
+or
+but
+to
+of
+in
+on
+for
+with
+as
+at
+by
+from
+is
+are
+was
+were
+be
+been
+being
+this
+that
+these
+those
+it
+its
+they
+their
+them
+we
+our
+you
+your
+i
+me
+my
+not
+no
+nor
+very
+also
+however
+there
+here
+`.trim();
+
+const DEFAULT_HEADING_DICT = `
+abstract 4
+introduction 4
+background 3
+purpose 4
+method 3
+methods 3
+results 4
+discussion 3
+conclusion 5
+conclusions 5
+summary 4
+key 2
+mechanism 2
+limits 2
+what 1
+changed 1
+why 1
+`.trim();
+
+/* =========================
+   UI Wiring
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+
+function setStatus(msg){
+  $("statusPill").textContent = msg;
+}
+
+function loadSample(id){
+  const s = SAMPLES.find(x=>x.id===id) || SAMPLES[0];
+  $("title").value = s.title;
+  $("text").value = s.text;
+}
+
+function resetDefaults(){
+  $("stopwords").value = DEFAULT_STOPWORDS;
+  $("bonus").value = DEFAULT_BONUS;
+  $("stigma").value = DEFAULT_STIGMA;
+  $("nullw").value = DEFAULT_NULL;
+  $("headdict").value = DEFAULT_HEADING_DICT;
+
+  $("algo").value = "luhn";
+  $("sample").value = "sample1";
+  loadSample("sample1");
+
+  $("luhnMode").value = "ratio";
+  $("luhnTarget").value = "0.25";
+  $("luhnGap").value = "4";
+  $("luhnLowFreq").value = "1";
+  $("luhnHighFreq").value = "999999";
+  $("luhnConsolidate").value = "on";
+
+  $("edmMode").value = "ratio";
+  $("edmTarget").value = "0.25";
+  $("edmPreset").value = "all";
+  $("edmKeyPct").value = "15";
+  $("aC").value = "1";
+  $("aK").value = "1";
+  $("aT").value = "1";
+  $("aL").value = "1";
+  $("titleW").value = "5";
+  $("headingW").value = "3";
+  $("O1").value = "1";
+  $("O2").value = "1";
+  $("O3").value = "1";
+  $("O4").value = "1";
+
+  syncAlgoVisibility();
+  setStatus("ready");
+}
+
+function syncAlgoVisibility(){
+  const algo = $("algo").value;
+  $("luhnControls").style.display = (algo==="luhn") ? "" : "none";
+  $("edmundsonControls").style.display = (algo==="edmundson") ? "" : "none";
+  setStatus(algo);
+}
+
+function applyEdmPreset(){
+  const p = $("edmPreset").value;
+  if(p==="all"){
+    $("aC").value = "1"; $("aK").value = "1"; $("aT").value = "1"; $("aL").value = "1";
+  } else if(p==="ctl"){
+    $("aC").value = "1"; $("aK").value = "0"; $("aT").value = "1"; $("aL").value = "1";
+  } else if(p==="cueOnly"){
+    $("aC").value = "1"; $("aK").value = "0"; $("aT").value = "0"; $("aL").value = "0";
+  } else if(p==="locusOnly"){
+    $("aC").value = "0"; $("aK").value = "0"; $("aT").value = "0"; $("aL").value = "1";
+  }
+}
+
+function run(){
+  const algo = $("algo").value;
+  const title = $("title").value || "";
+  const body = $("text").value || "";
+
+  if(!body.trim()){
+    setStatus("empty text");
+    return;
+  }
+
+  setStatus("running…");
+
+  let result = null;
+
+  if(algo === "luhn"){
+    const stopwords = normNewlines($("stopwords").value).split("\n").map(x=>x.trim()).filter(Boolean);
+    const mode = $("luhnMode").value;
+    const targetRaw = $("luhnTarget").value;
+    let target = Number(targetRaw);
+    if(mode==="ratio"){
+      if(!(target>0 && target<=1)) target = 0.25;
+      $("luhnTarget").value = String(target);
+    } else if(mode==="count"){
+      target = Math.max(1, Math.floor(target||1));
+      $("luhnTarget").value = String(target);
+    } else {
+      target = Number.isFinite(target) ? target : 0;
+      $("luhnTarget").value = String(target);
+    }
+
+    const opts = {
+      stopwords,
+      gap: Number($("luhnGap").value),
+      lowFreq: Number($("luhnLowFreq").value),
+      highFreq: Number($("luhnHighFreq").value),
+      mode,
+      target,
+      consolidate: $("luhnConsolidate").value === "on"
+    };
+    result = luhnSummarize(body, opts);
+    renderHighlightedOriginal(body, result.pickedInOrder);
+  } else {
+    applyEdmPreset(); // keep preset consistent
+    const opts = {
+      mode: $("edmMode").value,
+      target: $("edmTarget").value,
+      keyPct: $("edmKeyPct").value,
+      aC: $("aC").value,
+      aK: $("aK").value,
+      aT: $("aT").value,
+      aL: $("aL").value,
+      titleW: $("titleW").value,
+      headingW: $("headingW").value,
+      O1: $("O1").value,
+      O2: $("O2").value,
+      O3: $("O3").value,
+      O4: $("O4").value,
+      bonusText: $("bonus").value,
+      stigmaText: $("stigma").value,
+      nullText: $("nullw").value,
+      headingDictText: $("headdict").value
+    };
+
+    // normalize target field by mode
+    if(opts.mode==="ratio"){
+      let r = Number(opts.target);
+      if(!(r>0 && r<=1)) r = 0.25;
+      $("edmTarget").value = String(r);
+      opts.target = r;
+    } else {
+      let n = Math.max(1, Math.floor(Number(opts.target)||1));
+      $("edmTarget").value = String(n);
+      opts.target = n;
+    }
+
+    result = edmundsonSummarize(title, body, opts);
+    renderHighlightedOriginal(body, result.pickedInOrder);
+  }
+
+  renderSummary(result);
+  renderSentenceTable(result);
+  renderDiagnostics(result);
+
+  $("summaryMeta").textContent += ` · generated at ${new Date().toLocaleTimeString()}`;
+  setStatus("done");
+}
+
+function copySummary(){
+  const text = $("summary").innerText.trim();
+  if(!text) return;
+  navigator.clipboard.writeText(text).then(()=>{
+    setStatus("copied");
+    setTimeout(()=>setStatus($("algo").value), 900);
+  }).catch(()=>{
+    setStatus("copy failed");
+  });
+}
+
+/* =========================
+   Init
+   ========================= */
+$("algo").addEventListener("change", syncAlgoVisibility);
+$("sample").addEventListener("change", (e)=> loadSample(e.target.value));
+$("edmPreset").addEventListener("change", applyEdmPreset);
+$("runBtn").addEventListener("click", run);
+$("copyBtn").addEventListener("click", copySummary);
+$("resetBtn").addEventListener("click", resetDefaults);
+
+resetDefaults();
+</script>
+</body>
+</html>
